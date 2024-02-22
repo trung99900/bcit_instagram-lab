@@ -13,25 +13,21 @@ const fs = require("fs");
 const IOhandler = require("./IOhandler");
 (async () => {
     try {
-      // Define paths
         const zipFilePath = path.join(__dirname, "myfile.zip");
         const pathUnzipped = path.join(__dirname, "unzipped");
         const pathProcessed = path.join(__dirname, "grayscaled");
   
-        // Unzip the file
         await IOhandler.unzip(zipFilePath, pathUnzipped);
   
-        // Read the directory to get PNG files
         const pngFiles = await IOhandler.readDir(pathUnzipped);
   
-        // Convert each PNG image to grayscale
         for (const pngFile of pngFiles) {
             const filename = path.basename(pngFile);
             const outputPath = path.join(__dirname, "grayscaled", filename);
-            await IOhandler.grayScale(fs.createReadStream(pngFile), outputPath);
+            await IOhandler.grayScale(pngFile, outputPath);
         }
-        } catch (err) {
-            console.error("Error:", err);
-        }
+    } catch (err) {
+        console.error("Error:", err);
+    }
 })();
 

@@ -4,27 +4,20 @@ const fs = require("fs");
 const PNG = require("pngjs").PNG;
 const path = require("path");
 
-/**
- * Description: Decompresses the zip file from the given pathIn and writes to the given pathOut
- *
- * @param {string} pathIn
- * @param {string} pathOut
- * @return {Promise}
- */
 const unzip = async (pathIn, pathOut) => {
   try {
-    console.log("Attempting to open zip file:", pathIn); // Log the zip file path
+    console.log("Attempting to open zip file:", pathIn);
     const zip = await unzipper.open(pathIn);
-    console.log("Zip file opened successfully:", pathIn); // Log success
+    console.log("Zip file opened successfully:", pathIn);
     for await (const entry of zip) {
       try {
         if (entry.filename && !entry.filename.endsWith('/')) {
-          console.log("Entry filename:", entry.filename); // Log the filename to check
-          const entryStream = await entry.openReadStream(); // Open the stream for the entry
-          console.log("Entry stream:", entryStream); // Log the entry stream to check
+          console.log("Entry filename:", entry.filename);
+          const entryStream = await entry.openReadStream();
+          console.log("Entry stream:", entryStream);
           if (!entryStream) {
             console.error("Entry stream is undefined.");
-            continue; // Skip to the next entry
+            continue;
           }
           const fileName = path.basename(entry.filename);
           const destinationPath = path.join(pathOut, fileName);
@@ -41,16 +34,6 @@ const unzip = async (pathIn, pathOut) => {
   }
 };
 
-module.exports = {
-  unzip,
-};
-
-/**
- * Description: Reads all the PNG files from the given directory and returns a Promise containing an array of each PNG file path
- *
- * @param {string} dirPath
- * @return {Promise<Array<string>>}
- */
 const readDir = async (dir) => {
   try {
     const files = await fs.promises.readdir(dir);
@@ -62,13 +45,6 @@ const readDir = async (dir) => {
   }
 };
 
-/**
- * Description: Reads a PNG file from the given pathIn, converts it to grayscale, and writes to the given pathOut
- *
- * @param {string} pathIn
- * @param {string} pathOut
- * @return {Promise}
- */
 const grayScale = async (pathIn, pathOut) => {
   try {
     const data = await fs.promises.readFile(pathIn);
