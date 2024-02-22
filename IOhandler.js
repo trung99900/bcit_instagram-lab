@@ -1,36 +1,38 @@
-/*
- * Project: Milestone 1
- * File Name: IOhandler.js
- * Description: Collection of functions for files input/output related operations
- *
- * Created Date:
- * Author:
- *
- */
-const { pipeline} = require("stream/promises");
-const unzipper = require("yauzl-promise"),
-  fs = require("fs"),
-  PNG = require("pngjs").PNG,
-  path = require("path");
+const { pipeline } = require("stream/promises");
+const unzipper = require("yauzl-promise");
+const fs = require("fs");
+const PNG = require("pngjs").PNG;
+const path = require("path");
 
 /**
- * Description: decompress file from given pathIn, write to given pathOut
+ * Description: Decompresses the zip file from the given pathIn and writes to the given pathOut
  *
  * @param {string} pathIn
  * @param {string} pathOut
- * @return {promise}
+ * @return {Promise}
  */
 const unzip = async (pathIn, pathOut) => {
   try {
+    console.log("Attempting to open zip file:", pathIn); // Log the zip file path
     const zip = await unzipper.open(pathIn);
+    console.log("Zip file opened successfully:", pathIn); // Log success
     for await (const entry of zip) {
-      if (entry.fileName) {
-        const fileName = path.basename(entry.fileName);
-        const destinationPath = path.join(pathOut, fileName);
-        await fs.promises.mkdir(path.dirname(destinationPath), { recursive: true });
-        if (!entry.fileName.endsWith('/')) {
-          await pipeline(entry.stream, fs.createWriteStream(destinationPath));
+      try {
+        if (entry.filename && !entry.filename.endsWith('/')) {
+          console.log("Entry filename:", entry.filename); // Log the filename to check
+          const entryStream = await entry.openReadStream(); // Open the stream for the entry
+          console.log("Entry stream:", entryStream); // Log the entry stream to check
+          if (!entryStream) {
+            console.error("Entry stream is undefined.");
+            continue; // Skip to the next entry
+          }
+          const fileName = path.basename(entry.filename);
+          const destinationPath = path.join(pathOut, fileName);
+          await fs.promises.mkdir(path.dirname(destinationPath), { recursive: true });
+          await pipeline(entryStream, fs.createWriteStream(destinationPath));
         }
+      } catch (err) {
+        console.error("Error processing entry:", err);
       }
     }
     console.log("Extraction operation complete");
@@ -39,11 +41,15 @@ const unzip = async (pathIn, pathOut) => {
   }
 };
 
+module.exports = {
+  unzip,
+};
+
 /**
- * Description: read all the png files from given directory and return Promise containing array of each png file path
+ * Description: Reads all the PNG files from the given directory and returns a Promise containing an array of each PNG file path
  *
- * @param {string} path
- * @return {promise}
+ * @param {string} dirPath
+ * @return {Promise<Array<string>>}
  */
 const readDir = async (dir) => {
   try {
@@ -57,12 +63,11 @@ const readDir = async (dir) => {
 };
 
 /**
- * Description: Read in png file by given pathIn,
- * convert to grayscale and write to given pathOut
+ * Description: Reads a PNG file from the given pathIn, converts it to grayscale, and writes to the given pathOut
  *
- * @param {string} filePath
- * @param {string} pathProcessed
- * @return {promise}
+ * @param {string} pathIn
+ * @param {string} pathOut
+ * @return {Promise}
  */
 const grayScale = async (pathIn, pathOut) => {
   try {
